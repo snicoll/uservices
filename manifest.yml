@@ -1,0 +1,9 @@
+---
+applications:
+- name: uservices
+  memory: 1024M
+  instances: 1
+  host: uservices
+  domain: cfapps.io
+  services:
+  - mysql
