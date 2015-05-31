@@ -14,8 +14,9 @@ public class BasicApp {
     public BasicApp() throws RuntimeException {
         Properties properties = new Properties();
         try {
-            properties.load(getClass().getResourceAsStream("/default.properties"));
-            server = new Server(tryPort(Integer.parseInt(properties.getProperty("server.port"))));
+            properties.load(getClass().getResourceAsStream(defaultProperties()));
+            int port = tryPort(Integer.parseInt(properties.getProperty("server.port")));
+            server = new Server(port);
             server.setHandler(getHandlers(properties));
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -47,6 +48,10 @@ public class BasicApp {
 
     public HandlerList getHandlers(Properties properties) throws Exception {
         return new HandlerList();
+    }
+
+    protected String defaultProperties() {
+        return "/default.properties";
     }
 
     private int tryPort(int defaultPort) {

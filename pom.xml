@@ -10,7 +10,11 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>app</module>
+        <module>services/allocations</module>
+        <module>services/backlog</module>
+        <module>services/integration</module>
+        <module>services/registration</module>
+        <module>services/timesheets</module>
         <module>components/accounts</module>
         <module>components/jdbc-support</module>
         <module>components/projects</module>

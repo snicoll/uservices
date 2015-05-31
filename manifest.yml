@@ -1,9 +1,37 @@
 ---
 applications:
-- name: uservices
-  memory: 1024M
+- name: allocations
+  path: services/allocations/target/allocations-1.0-SNAPSHOT.jar
+  memory: 256M
   instances: 1
-  host: uservices
+  host: allocations-uservices
+  domain: cfapps.io
+  services:
+  - mysql
+
+- name: backlog
+  path: services/backlog/target/backlog-1.0-SNAPSHOT.jar
+  memory: 256M
+  instances: 1
+  host: backlog-uservices
+  domain: cfapps.io
+  services:
+  - mysql
+
+- name: registration
+  path: services/registration/target/registration-1.0-SNAPSHOT.jar
+  memory: 256M
+  instances: 1
+  host: registration-uservices
+  domain: cfapps.io
+  services:
+  - mysql
+
+- name: timesheets
+  path: services/timesheets/target/timesheets-1.0-SNAPSHOT.jar
+  memory: 256M
+  instances: 1
+  host: timesheets-uservices
   domain: cfapps.io
   services:
   - mysql
