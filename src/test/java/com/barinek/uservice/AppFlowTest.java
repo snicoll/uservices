@@ -1,7 +1,5 @@
 package com.barinek.uservice;
 
-import com.barinek.uservice.support.AppRunner;
-import com.barinek.uservice.support.TestDataSource;
 import org.apache.http.message.BasicNameValuePair;
 import org.junit.Test;
 import org.slf4j.Logger;

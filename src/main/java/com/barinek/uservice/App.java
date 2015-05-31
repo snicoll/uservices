@@ -1,10 +1,5 @@
 package com.barinek.uservice;
 
-import com.barinek.uservice.controllers.*;
-import com.barinek.uservice.dal.*;
-import com.barinek.uservice.models.RegistrationService;
-import com.barinek.uservice.utils.CredentialsMySQL;
-import com.barinek.uservice.utils.MigrationsMySQL;
 import com.zaxxer.hikari.HikariDataSource;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;
