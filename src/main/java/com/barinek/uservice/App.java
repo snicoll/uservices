@@ -1,5 +1,19 @@
 package com.barinek.uservice;
 
+import com.barinek.uservice.accounts.AccountController;
+import com.barinek.uservice.accounts.AccountDAO;
+import com.barinek.uservice.accounts.RegistrationController;
+import com.barinek.uservice.accounts.RegistrationService;
+import com.barinek.uservice.allocations.AllocationController;
+import com.barinek.uservice.allocations.AllocationDAO;
+import com.barinek.uservice.backlog.StoryController;
+import com.barinek.uservice.backlog.StoryDAO;
+import com.barinek.uservice.projects.ProjectController;
+import com.barinek.uservice.projects.ProjectDAO;
+import com.barinek.uservice.timesheets.TimeEntryController;
+import com.barinek.uservice.timesheets.TimeEntryDAO;
+import com.barinek.uservice.users.UserController;
+import com.barinek.uservice.users.UserDAO;
 import com.zaxxer.hikari.HikariDataSource;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;

@@ -1,5 +1,6 @@
 package com.barinek.uservice;
 
+import com.barinek.uservice.backlog.Story;
 import org.junit.Test;
 
 import java.util.List;
