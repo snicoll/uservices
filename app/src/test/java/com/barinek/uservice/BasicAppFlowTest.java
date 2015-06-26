@@ -1,23 +1,38 @@
 package com.barinek.uservice;
 
-import com.barinek.uservice.support.AppRunner;
 import com.barinek.uservices.schema.TestDataSource;
-import org.apache.http.message.BasicNameValuePair;
+import org.junit.After;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
+import org.springframework.web.client.RestTemplate;
 
+import javax.sql.DataSource;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class BasicAppFlowTest extends AppRunner {
+public class BasicAppFlowTest {
     private static final Logger logger = LoggerFactory.getLogger(BasicAppFlowTest.class);
+
+    ConfigurableApplicationContext context = SpringApplication.run(App.class);
+
+    @After
+    public void tearDown() throws Exception {
+        context.stop();
+    }
 
     @Test
     public void testBasicFlow() throws Exception {
-        TestDataSource.cleanWithFixtures();
+        TestDataSource.cleanWithFixtures(context.getBean(DataSource.class));
 
         String aUserId = register();
         logger.info("Registered userId => {}", aUserId);
@@ -63,11 +78,11 @@ public class BasicAppFlowTest extends AppRunner {
     }
 
     private String showUser(String userId) throws java.io.IOException, URISyntaxException {
-        return doGet("http://localhost:8080/users", new BasicNameValuePair("userId", userId));
+        return doGet("http://localhost:8080/users?userId={userId}", new BasicNameValuePair("userId", userId));
     }
 
     private String showAccount(String ownerId) throws java.io.IOException, URISyntaxException {
-        String response = doGet("http://localhost:8080/accounts", new BasicNameValuePair("ownerId", ownerId));
+        String response = doGet("http://localhost:8080/accounts?ownerId={ownerId}", new BasicNameValuePair("ownerId", ownerId));
         Pattern envPattern = Pattern.compile("id\":(\\d+),");
         Matcher matcher = envPattern.matcher(response);
         matcher.find();
@@ -84,7 +99,7 @@ public class BasicAppFlowTest extends AppRunner {
     }
 
     private String listProjects(String accountId) throws IOException, URISyntaxException {
-        return doGet("http://localhost:8080/projects", new BasicNameValuePair("accountId", accountId));
+        return doGet("http://localhost:8080/projects?accountId={accountId}", new BasicNameValuePair("accountId", accountId));
     }
 
     private String createAllocation(String aProjectId, String aUserId) throws IOException {
@@ -92,7 +107,7 @@ public class BasicAppFlowTest extends AppRunner {
     }
 
     private String listAllocations(String aProjectId) throws IOException, URISyntaxException {
-        return doGet("http://localhost:8080/allocations", new BasicNameValuePair("projectId", aProjectId));
+        return doGet("http://localhost:8080/allocations?projectId={projectId}", new BasicNameValuePair("projectId", aProjectId));
     }
 
     private String createTimeEntry(String aProjectId, String aUserId) throws IOException {
@@ -100,7 +115,7 @@ public class BasicAppFlowTest extends AppRunner {
     }
 
     private String listTimeEntries(String aUserId) throws IOException, URISyntaxException {
-        return doGet("http://localhost:8080/time-entries", new BasicNameValuePair("userId", aUserId));
+        return doGet("http://localhost:8080/time-entries?userId={userId}", new BasicNameValuePair("userId", aUserId));
     }
 
     private String createStory(String aProjectId) throws IOException {
@@ -108,6 +123,33 @@ public class BasicAppFlowTest extends AppRunner {
     }
 
     private String listStories(String aProjectId) throws IOException, URISyntaxException {
-        return doGet("http://localhost:8080/stories", new BasicNameValuePair("projectId", aProjectId));
+        return doGet("http://localhost:8080/stories?projectId={projectId}", new BasicNameValuePair("projectId", aProjectId));
+    }
+
+    private class BasicNameValuePair {
+        private final String name;
+        private final String value;
+
+        public BasicNameValuePair(String name, String value) {
+            this.name = name;
+            this.value = value;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getValue() {
+            return value;
+        }
+    }
+
+    private String doPost(String url, String json) {
+        RequestEntity<String> body = RequestEntity.post(URI.create(url)).contentType(MediaType.APPLICATION_JSON).body(json);
+        return new RestTemplate().exchange(url, HttpMethod.POST, body, String.class).getBody();
+    }
+
+    private String doGet(String urlWithParamsTemplating, BasicNameValuePair pair) {
+        return new RestTemplate().getForObject(urlWithParamsTemplating, String.class, Collections.singletonMap(pair.getName(), pair.getValue()));
     }
 }

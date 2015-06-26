@@ -1,28 +1,24 @@
 package com.barinek.uservices.users;
 
-import com.barinek.uservices.restsupport.BasicHandler;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.eclipse.jetty.server.Request;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.sql.SQLException;
 
-public class UserController extends BasicHandler {
-    private final UserDAO dao;
-    private final ObjectMapper mapper;
+@RestController
+public class UserController {
+    private final UserRepository repository;
 
-    public UserController(UserDAO dao) {
-        this.dao = dao;
-        this.mapper = new ObjectMapper();
+    @Autowired
+    public UserController(UserRepository repository) {
+        this.repository = repository;
     }
 
-    @Override
-    public void handle(String s, Request request, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException, ServletException {
-        get("/users", request, httpServletResponse, () -> {
-            String userId = request.getParameter("userId");
-            mapper.writeValue(httpServletResponse.getOutputStream(), dao.show(Integer.parseInt(userId)));
-        });
+    @RequestMapping(method = RequestMethod.GET, value = "/users")
+    User show(@RequestParam int userId) throws SQLException {
+        return repository.show(userId);
     }
 }

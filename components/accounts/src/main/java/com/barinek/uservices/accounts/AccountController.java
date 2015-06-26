@@ -1,28 +1,22 @@
 package com.barinek.uservices.accounts;
 
-import com.barinek.uservices.restsupport.BasicHandler;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.eclipse.jetty.server.Request;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+@RestController
+public class AccountController {
+    private final AccountRepository repository;
 
-public class AccountController extends BasicHandler {
-    private final AccountDAO dao;
-    private final ObjectMapper mapper;
-
-    public AccountController(AccountDAO dao) {
-        this.dao = dao;
-        this.mapper = new ObjectMapper();
+    @Autowired
+    public AccountController(AccountRepository repository) {
+        this.repository = repository;
     }
 
-    @Override
-    public void handle(String s, Request request, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException, ServletException {
-        get("/accounts", request, httpServletResponse, () -> {
-            String ownerId = request.getParameter("ownerId");
-            mapper.writeValue(httpServletResponse.getOutputStream(), dao.findFor(Integer.parseInt(ownerId)));
-        });
+    @RequestMapping(method = RequestMethod.GET, value = "/accounts")
+    Account list(@RequestParam int ownerId) throws Exception {
+        return repository.findFor(ownerId);
     }
 }

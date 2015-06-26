@@ -1,32 +1,28 @@
 package com.barinek.uservice.backlog;
 
-import com.barinek.uservices.restsupport.BasicHandler;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.eclipse.jetty.server.Request;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Collection;
 
-public class StoryController extends BasicHandler {
-    private final StoryDAO dao;
-    private final ObjectMapper mapper;
+@RestController
+@RequestMapping("/stories")
+public class StoryController {
+    private final StoryRepository dao;
 
-    public StoryController(StoryDAO dao) {
+    @Autowired
+    public StoryController(StoryRepository dao) {
         this.dao = dao;
-        this.mapper = new ObjectMapper();
     }
 
-    @Override
-    public void handle(String s, Request request, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException, ServletException {
-        post("/stories", request, httpServletResponse, () -> {
-            Story story = mapper.readValue(request.getReader(), Story.class);
-            mapper.writeValue(httpServletResponse.getOutputStream(), dao.create(story));
-        });
-        get("/stories", request, httpServletResponse, () -> {
-            String accountId = request.getParameter("projectId");
-            mapper.writeValue(httpServletResponse.getOutputStream(), dao.list(Integer.parseInt(accountId)));
-        });
+    @RequestMapping(method = RequestMethod.POST)
+    Story create(@RequestBody Story s) throws Exception {
+        return dao.create(s);
+    }
+
+    @RequestMapping(method = RequestMethod.GET)
+    Collection<Story> list(@RequestParam int projectId) throws SQLException {
+        return dao.list(projectId);
     }
 }

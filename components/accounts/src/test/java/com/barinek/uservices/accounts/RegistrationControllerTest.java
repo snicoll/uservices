@@ -1,49 +1,66 @@
 package com.barinek.uservices.accounts;
 
-import com.barinek.uservices.restsupport.BasicApp;
-import com.barinek.uservices.restsupport.RestTestSupport;
+
 import com.barinek.uservices.schema.TestDataSource;
 import com.barinek.uservices.users.User;
-import com.barinek.uservices.users.UserDAO;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.eclipse.jetty.server.handler.HandlerList;
-import org.junit.After;
-import org.junit.Assert;
+import com.barinek.uservices.users.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 import javax.sql.DataSource;
-import java.util.Properties;
 
-public class RegistrationControllerTest extends RestTestSupport {
-    BasicApp app = new BasicApp() {
-        @Override
-        public HandlerList getHandlers(Properties properties) throws Exception {
-            DataSource ds = TestDataSource.getDataSource();
-            HandlerList list = new HandlerList();
-            list.addHandler(new RegistrationController(new RegistrationService(new UserDAO(ds), new AccountDAO(ds))));
-            return list;
-        }
-    };
+import static junit.framework.TestCase.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringApplicationConfiguration
+@WebAppConfiguration
+public class RegistrationControllerTest {
+    private MockMvc mockMvc;
+
+    @Autowired
+    private WebApplicationContext applicationContext;
+
+    @Autowired
+    private DataSource dataSource;
+
+    @SpringBootApplication
+    @ComponentScan(basePackageClasses = {UserRepository.class, RegistrationService.class})
+    public static class BasicApp {
+    }
 
     @Before
     public void setUp() throws Exception {
-        app.start();
-    }
+        TestDataSource.cleanWithFixtures(dataSource);
 
-    @After
-    public void tearDown() throws Exception {
-        app.stop();
+        mockMvc = MockMvcBuilders.webAppContextSetup(applicationContext).build();
     }
 
     @Test
     public void testRegister() throws Exception {
-        TestDataSource.cleanWithFixtures();
-
         String json = "{\"name\":\"aUser\"}";
-        String response = doPost("http://localhost:8080/registration", json);
 
-        User actual = new ObjectMapper().readValue(response, User.class);
-        Assert.assertEquals("aUser", actual.getName());
+        mockMvc.perform(
+                post("/registration")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+                .andExpect(mvcResult -> {
+                    User actual = new ObjectMapper().readValue(mvcResult.getResponse().getContentAsString(), User.class);
+                    assertEquals("aUser", actual.getName());
+                });
     }
 }

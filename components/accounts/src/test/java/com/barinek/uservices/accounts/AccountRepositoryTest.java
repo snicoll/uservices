@@ -1,7 +1,6 @@
 package com.barinek.uservices.accounts;
 
 import com.barinek.uservices.schema.TestDataSource;
-import com.barinek.uservices.users.User;
 import com.barinek.uservices.users.UserRepository;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,23 +16,27 @@ import static junit.framework.TestCase.assertEquals;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration
-public class RegistrationServiceTest {
-    @Autowired
-    private DataSource dataSource;
-
-    @Autowired
-    private RegistrationService service;
+public class AccountRepositoryTest {
 
     @SpringBootApplication
-    @ComponentScan(basePackageClasses = {UserRepository.class, RegistrationService.class})
+    @ComponentScan(basePackageClasses = {UserRepository.class, AccountRepository.class})
     public static class BasicApp {
     }
 
+    @Autowired
+    private AccountRepository accountRepository;
+
+    @Autowired
+    private DataSource dataSource;
+
     @Test
-    public void testCreateUserWithAccount() throws Exception {
+    public void testFindFor() throws Exception {
         TestDataSource.cleanWithFixtures(dataSource);
 
-        User aUser = service.createUserWithAccount(new User("aUser"));
-        assertEquals("aUser", aUser.getName());
+        int ownerId = 138;
+
+        accountRepository.create(new Account(ownerId, "anAccount"));
+        Account anAccount = accountRepository.findFor(ownerId);
+        assertEquals(ownerId, anAccount.getOwnerId());
     }
 }

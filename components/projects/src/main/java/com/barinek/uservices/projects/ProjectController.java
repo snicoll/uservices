@@ -1,32 +1,28 @@
 package com.barinek.uservices.projects;
 
-import com.barinek.uservices.restsupport.BasicHandler;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.eclipse.jetty.server.Request;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Collection;
 
-public class ProjectController extends BasicHandler {
-    private final ProjectDAO dao;
-    private final ObjectMapper mapper;
+@RestController
+@RequestMapping("/projects")
+public class ProjectController {
+    private final ProjectRepository repository;
 
-    public ProjectController(ProjectDAO dao) {
-        this.dao = dao;
-        this.mapper = new ObjectMapper();
+    @Autowired
+    public ProjectController(ProjectRepository repository) {
+        this.repository = repository;
     }
 
-    @Override
-    public void handle(String s, Request request, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException, ServletException {
-        post("/projects", request, httpServletResponse, () -> {
-            Project project = mapper.readValue(request.getReader(), Project.class);
-            mapper.writeValue(httpServletResponse.getOutputStream(), dao.create(project));
-        });
-        get("/projects", request, httpServletResponse, () -> {
-            String accountId = request.getParameter("accountId");
-            mapper.writeValue(httpServletResponse.getOutputStream(), dao.list(Integer.parseInt(accountId)));
-        });
+    @RequestMapping(method = RequestMethod.POST)
+    Project create(@RequestBody Project project) throws SQLException {
+        return repository.create(project);
+    }
+
+    @RequestMapping(method = RequestMethod.GET)
+    Collection<Project> list(@RequestParam int accountId) throws SQLException {
+        return repository.list(accountId);
     }
 }

@@ -1,29 +1,25 @@
 package com.barinek.uservices.accounts;
 
-import com.barinek.uservices.restsupport.BasicHandler;
 import com.barinek.uservices.users.User;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.eclipse.jetty.server.Request;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.sql.SQLException;
 
-public class RegistrationController extends BasicHandler {
+@RestController
+public class RegistrationController {
     private final RegistrationService service;
-    private final ObjectMapper mapper;
 
+    @Autowired
     public RegistrationController(RegistrationService service) {
         this.service = service;
-        this.mapper = new ObjectMapper();
     }
 
-    @Override
-    public void handle(String s, Request request, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws IOException, ServletException {
-        post("/registration", request, httpServletResponse, () -> {
-            User user = mapper.readValue(request.getReader(), User.class);
-            mapper.writeValue(httpServletResponse.getOutputStream(), service.createUserWithAccount(user));
-        });
+    @RequestMapping(value = "/registration", method = RequestMethod.POST)
+    User create(@RequestBody User user) throws SQLException {
+        return service.createUserWithAccount(user);
     }
 }

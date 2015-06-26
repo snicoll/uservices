@@ -1,46 +1,55 @@
 package com.barinek.uservices.users;
 
-import com.barinek.uservices.restsupport.BasicApp;
-import com.barinek.uservices.restsupport.RestTestSupport;
 import com.barinek.uservices.schema.TestDataSource;
-import org.apache.http.message.BasicNameValuePair;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.eclipse.jetty.server.handler.HandlerList;
-import org.junit.After;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
-import java.util.Properties;
+import javax.sql.DataSource;
 
 import static org.junit.Assert.assertEquals;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class UserControllerTest extends RestTestSupport {
-    BasicApp app = new BasicApp() {
-        @Override
-        public HandlerList getHandlers(Properties properties) throws Exception {
-            HandlerList list = new HandlerList();
-            list.addHandler(new UserController(new UserDAO(TestDataSource.getDataSource())));
-            return list;
-        }
-    };
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringApplicationConfiguration
+@WebAppConfiguration
+public class UserControllerTest {
+    private MockMvc mockMvc;
+
+    @Autowired
+    private WebApplicationContext applicationContext;
+
+    @Autowired
+    private DataSource dataSource;
+
+    @SpringBootApplication
+    public static class BasicApp {
+    }
 
     @Before
     public void setUp() throws Exception {
-        app.start();
-    }
+        TestDataSource.cleanWithFixtures(dataSource);
 
-    @After
-    public void tearDown() throws Exception {
-        app.stop();
+        mockMvc = MockMvcBuilders.webAppContextSetup(applicationContext).build();
     }
 
     @Test
     public void testShow() throws Exception {
-        TestDataSource.cleanWithFixtures();
-
-        String response = doGet("http://localhost:8080/users", new BasicNameValuePair("userId", "1")); // user from fixtures
-
-        User actual = new ObjectMapper().readValue(response, User.class);
-        assertEquals(actual.getName(), actual.getName());
+        mockMvc.perform(get("/users").param("userId", "1"))
+                .andExpect(status().isOk())
+                .andExpect(mvcResult -> {
+                    User actual = new ObjectMapper().readValue(mvcResult.getResponse().getContentAsString(), User.class);
+                    assertEquals(actual.getName(), "Jack");
+                });
     }
 }
