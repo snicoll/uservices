@@ -16,7 +16,6 @@
         <dependency>
             <groupId>com.barinek.uservices</groupId>
             <artifactId>schema</artifactId>
-            <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>
