@@ -1,15 +1,22 @@
 package com.barinek.uservice;
 
 import com.barinek.uservices.schema.TestDataSource;
-import org.junit.After;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.boot.test.WebIntegrationTest;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.web.client.RestTemplate;
 
 import javax.sql.DataSource;
@@ -20,19 +27,21 @@ import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringApplicationConfiguration(classes = App.class)
+@WebIntegrationTest(randomPort = true)
 public class BasicAppFlowTest {
     private static final Logger logger = LoggerFactory.getLogger(BasicAppFlowTest.class);
 
-    ConfigurableApplicationContext context = SpringApplication.run(App.class);
+	@Autowired
+	private DataSource dataSource;
 
-    @After
-    public void tearDown() throws Exception {
-        context.stop();
-    }
+	@Value("${local.server.port}")
+	private int port;
 
     @Test
     public void testBasicFlow() throws Exception {
-        TestDataSource.cleanWithFixtures(context.getBean(DataSource.class));
+        TestDataSource.cleanWithFixtures(this.dataSource);
 
         String aUserId = register();
         logger.info("Registered userId => {}", aUserId);
@@ -69,7 +78,7 @@ public class BasicAppFlowTest {
     }
 
     private String register() throws java.io.IOException {
-        String response = doPost("http://localhost:8080/registration", "{\"name\": \"aUser\"}");
+        String response = doPost(createUrl("/registration"), "{\"name\": \"aUser\"}");
 
         Pattern envPattern = Pattern.compile("id\":(\\d+),");
         Matcher matcher = envPattern.matcher(response);
@@ -78,11 +87,11 @@ public class BasicAppFlowTest {
     }
 
     private String showUser(String userId) throws java.io.IOException, URISyntaxException {
-        return doGet("http://localhost:8080/users?userId={userId}", new BasicNameValuePair("userId", userId));
+        return doGet(createUrl("/users?userId={userId}"), new BasicNameValuePair("userId", userId));
     }
 
     private String showAccount(String ownerId) throws java.io.IOException, URISyntaxException {
-        String response = doGet("http://localhost:8080/accounts?ownerId={ownerId}", new BasicNameValuePair("ownerId", ownerId));
+        String response = doGet(createUrl("/accounts?ownerId={ownerId}"), new BasicNameValuePair("ownerId", ownerId));
         Pattern envPattern = Pattern.compile("id\":(\\d+),");
         Matcher matcher = envPattern.matcher(response);
         matcher.find();
@@ -90,7 +99,7 @@ public class BasicAppFlowTest {
     }
 
     private String createProject(String accountId) throws java.io.IOException {
-        String response = doPost("http://localhost:8080/projects", String.format("{\"accountId\":\"%s\",\"name\":\"aProject\"}", accountId));
+        String response = doPost(createUrl("/projects"), String.format("{\"accountId\":\"%s\",\"name\":\"aProject\"}", accountId));
 
         Pattern envPattern = Pattern.compile("id\":(\\d+),");
         Matcher matcher = envPattern.matcher(response);
@@ -99,31 +108,31 @@ public class BasicAppFlowTest {
     }
 
     private String listProjects(String accountId) throws IOException, URISyntaxException {
-        return doGet("http://localhost:8080/projects?accountId={accountId}", new BasicNameValuePair("accountId", accountId));
+        return doGet(createUrl("/projects?accountId={accountId}"), new BasicNameValuePair("accountId", accountId));
     }
 
     private String createAllocation(String aProjectId, String aUserId) throws IOException {
-        return doPost("http://localhost:8080/allocations", String.format("{\"projectId\":%s,\"userId\":%s,\"firstDay\":\"2015-05-17\",\"lastDay\":\"2015-05-26\"}", aProjectId, aUserId));
+        return doPost(createUrl("/allocations"), String.format("{\"projectId\":%s,\"userId\":%s,\"firstDay\":\"2015-05-17\",\"lastDay\":\"2015-05-26\"}", aProjectId, aUserId));
     }
 
     private String listAllocations(String aProjectId) throws IOException, URISyntaxException {
-        return doGet("http://localhost:8080/allocations?projectId={projectId}", new BasicNameValuePair("projectId", aProjectId));
+        return doGet(createUrl("/allocations?projectId={projectId}"), new BasicNameValuePair("projectId", aProjectId));
     }
 
     private String createTimeEntry(String aProjectId, String aUserId) throws IOException {
-        return doPost("http://localhost:8080/time-entries", String.format("{\"projectId\":%s,\"userId\":%s,\"date\":\"2015-05-17\",\"hours\":\"8\"}", aProjectId, aUserId));
+        return doPost(createUrl("/time-entries"), String.format("{\"projectId\":%s,\"userId\":%s,\"date\":\"2015-05-17\",\"hours\":\"8\"}", aProjectId, aUserId));
     }
 
     private String listTimeEntries(String aUserId) throws IOException, URISyntaxException {
-        return doGet("http://localhost:8080/time-entries?userId={userId}", new BasicNameValuePair("userId", aUserId));
+        return doGet(createUrl("/time-entries?userId={userId}"), new BasicNameValuePair("userId", aUserId));
     }
 
     private String createStory(String aProjectId) throws IOException {
-        return doPost("http://localhost:8080/stories", String.format("{\"projectId\":%s,\"name\":\"A story\"}", aProjectId));
+        return doPost(createUrl("/stories"), String.format("{\"projectId\":%s,\"name\":\"A story\"}", aProjectId));
     }
 
     private String listStories(String aProjectId) throws IOException, URISyntaxException {
-        return doGet("http://localhost:8080/stories?projectId={projectId}", new BasicNameValuePair("projectId", aProjectId));
+        return doGet(createUrl("/stories?projectId={projectId}"), new BasicNameValuePair("projectId", aProjectId));
     }
 
     private class BasicNameValuePair {
@@ -152,4 +161,8 @@ public class BasicAppFlowTest {
     private String doGet(String urlWithParamsTemplating, BasicNameValuePair pair) {
         return new RestTemplate().getForObject(urlWithParamsTemplating, String.class, Collections.singletonMap(pair.getName(), pair.getValue()));
     }
+
+	private String createUrl(String path) {
+		return "http://localhost:" + this.port + path;
+	}
 }
